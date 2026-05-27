@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: sar-text-to-speech
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+

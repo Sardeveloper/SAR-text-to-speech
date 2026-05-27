@@ -1,0 +1,6 @@
+node_modules
+.env
+users.db
+speech.mp3
+voice.mp3
+*.db

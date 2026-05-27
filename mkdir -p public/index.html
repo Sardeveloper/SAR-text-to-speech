@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Voice Assistant</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #111;
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+  background: #222;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+textarea {
+  width: 100%;
+  height: 120px;
+  font-size: 16px;
+  padding: 10px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.speak { background: green; color: white; }
+.ai { background: blue; color: white; }
+.mp3 { background: orange; color: white; }
+.voice { background: purple; color: white; }
+
+#output {
+  margin-top: 15px;
+  padding: 10px;
+  background: #333;
+  border-radius: 8px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h2>🤖 AI Voice Assistant</h2>
+
+<textarea id="text" placeholder="Type or speak..."></textarea>
+
+<button class="voice" onclick="startVoice()">🎤 Speak</button>
+<button class="speak" onclick="speak()">🔊 Speak</button>
+<button class="ai" onclick="askAI()">🤖 Ask AI</button>
+<button class="mp3" onclick="downloadMP3()">🎧 Download MP3</button>
+
+<div id="output"></div>
+
+</div>
+
+<script>
+
+// 🎤 Voice input
+function startVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+
+  recognition.start();
+
+  recognition.onresult = function(event) {
+    const text = event.results[0][0].transcript;
+    document.getElementById("text").value = text;
+  };
+}
+
+// 🔊 Speak
+function speak() {
+  const text = document.getElementById("text").value;
+
+  fetch("/speak", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({text})
+  });
+}
+
+// 🤖 AI
+function askAI() {
+  const text = document.getElementById("text").value;
+
+  fetch("/ai", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({text})
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("output").innerText = data.reply;
+
+    // auto speak AI reply
+    fetch("/speak", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({text: data.reply})
+    });
+  });
+}
+
+// function downloadMP3() {
+
+  const text = document.getElementById("text").value;
+  if (!text) return;
+
+  fetch("/tts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text })
+  })
+  .then(res => res.blob())
+  .then(blob => {
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "speech.mp3";
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+  });
+}
+
+</script>
+
+</body>
+</html>

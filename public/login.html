@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sar text to speech</title>
+
+<style>
+body{background:#111;color:white;text-align:center;padding-top:80px;font-family:Arial}
+input,button{width:80%;padding:12px;margin:8px;border:none;border-radius:8px}
+.login{background:#2d7dff;color:white}
+.register{background:#28a745;color:white}
+</style>
+</head>
+
+<body>
+
+<h2>SAR text to speech</h2>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button class="login" onclick="login()">Login</button>
+<button class="register" onclick="register()">Register</button>
+
+<script>
+function login(){
+fetch("/login",{method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({email:email.value,password:password.value})})
+.then(r=>r.json()).then(d=>{
+if(d.success) window.location="/";
+else alert(d.error);
+});
+}
+
+function register(){
+fetch("/register",{method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({email:email.value,password:password.value})})
+.then(r=>r.json()).then(d=>{
+alert(d.success?"Registered":"Error");
+});
+}
+</script>
+
+</body>
+</html>

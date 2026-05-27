@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SAR text to speech</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background: linear-gradient(135deg,#1a1a1a,#2b1b10);
+  color:white;
+}
+
+.container{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background: rgba(255,140,0,0.15);
+  padding:15px;
+  border-radius:12px;
+}
+
+.box{
+  background: rgba(255,140,0,0.08);
+  padding:12px;
+  margin-top:15px;
+  border-radius:12px;
+}
+
+input,select{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+}
+
+.primary{background:linear-gradient(90deg,#ff8c00,#ff5500);color:white;}
+.danger{background:#ff3b30;color:white;}
+.success{background:#ffb347;color:black;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="topbar">
+<h2>🔊 SAR text to speech </h2>
+<div>
+👤 <span id="user"></span>
+<button class="danger" onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div class="box">
+📊 Usage: <span id="usage"></span> / 10
+</div>
+
+<select id="voiceSelect"></select>
+
+<input id="text" placeholder="Type text">
+
+<button class="primary" onclick="speak()">Speak</button>
+<button class="danger" onclick="stopSpeech()">Stop</button>
+<button class="success" onclick="download()">Download MP3</button>
+
+<div class="box">
+<h3>History</h3>
+<ul id="history"></ul>
+</div>
+
+</div>
+
+<script>
+
+let voices = [];
+
+function loadVoices(){
+  voices = speechSynthesis.getVoices();
+  const sel = document.getElementById("voiceSelect");
+  sel.innerHTML = "";
+
+  voices.forEach((v,i)=>{
+    let opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = v.name + " (" + v.lang + ")";
+    sel.appendChild(opt);
+  });
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function loadUser(){
+fetch("/me").then(r=>r.json()).then(u=>{
+if(!u) return;
+user.innerText=u.email;
+usage.innerText=u.usage_count;
+});
+}
+
+function logout(){
+fetch("/logout",{method:"POST"})
+.then(()=>location="/login.html");
+}
+
+function speak(){
+let text=document.getElementById("text").value;
+let utter=new SpeechSynthesisUtterance(text);
+
+let selected=voices[voiceSelect.value];
+if(selected) utter.voice=selected;
+
+speechSynthesis.speak(utter);
+
+let li=document.createElement("li");
+li.textContent=text;
+history.appendChild(li);
+}
+
+function stopSpeech(){
+speechSynthesis.cancel();
+}
+
+function download(){
+fetch("/tts",{method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({text:text.value})})
+.then(r=>r.blob())
+.then(blob=>{
+let url=URL.createObjectURL(blob);
+let a=document.createElement("a");
+a.href=url;
+a.download="speech.mp3";
+a.click();
+});
+}
+
+loadUser();
+
+</script>
+
+</body>
+</html>

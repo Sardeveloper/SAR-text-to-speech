@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "gtts": "^0.2.1",
+    "node-fetch": "^3.3.2",
+    "openai": "^6.39.0",
+    "say": "^0.16.0",
+    "sqlite3": "^6.0.1"
+  }
+}
