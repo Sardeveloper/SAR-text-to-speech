@@ -1,306 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
+  <title>SAR Text to Speech</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>SAR Text to Speech</title>
-
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MJW8XLZ5R4"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-MJW8XLZ5R4');
-  </script>
-
   <style>
-    body{
-      margin:0;
-      font-family:Arial;
-      background:#fff7f0;
+    body {
+      font-family: Arial;
+      text-align: center;
+      padding: 20px;
     }
 
-    .header{
-      background:#ff6a00;
-      color:white;
-      padding:15px;
-      text-align:center;
-      font-size:24px;
-      font-weight:bold;
+    textarea {
+      width: 90%;
+      height: 120px;
+      margin-bottom: 10px;
     }
 
-    .container{
-      max-width:700px;
-      margin:30px auto;
-      background:white;
-      padding:20px;
-      border-radius:12px;
-      box-shadow:0 4px 20px rgba(0,0,0,0.1);
+    select, button, input {
+      padding: 10px;
+      margin: 5px;
+      width: 90%;
+      max-width: 400px;
     }
 
-    input, textarea, select, button{
-      width:100%;
-      margin-top:10px;
-      padding:12px;
-      border-radius:8px;
-      font-size:16px;
-    }
-
-    textarea{
-      height:140px;
-      border:2px solid #ff6a00;
-    }
-
-    input, select{
-      border:2px solid #ff6a00;
-    }
-
-    button{
-      border:none;
-      background:#ff6a00;
-      color:white;
-      font-weight:bold;
-      cursor:pointer;
-      transition:0.3s;
-    }
-
-    button:hover{
-      background:#e85c00;
-      transform:scale(1.01);
-    }
-
-    .hidden{
-      display:none;
-    }
-
-    .footer{
-      text-align:center;
-      margin-top:20px;
-      color:gray;
-      font-size:12px;
+    .box {
+      margin-top: 20px;
     }
   </style>
 </head>
 
 <body>
 
-<div class="header">
-  🔊 SAR Text to Speech
-</div>
+  <h1>SAR Text-to-Speech</h1>
 
-<!-- LOGIN / REGISTER -->
-<div class="container" id="authBox">
+  <!-- LOGIN -->
+  <div class="box">
+    <h3>Login</h3>
+    <input id="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Password" />
 
-  <h2>Login</h2>
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+  </div>
 
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
+  <hr>
 
-  <button onclick="login()">Login</button>
-  <button onclick="register()">Register</button>
+  <!-- TEXT AREA -->
+  <div class="box">
+    <textarea id="text" placeholder="Write text here..."></textarea>
 
-</div>
+    <br>
 
-<!-- MAIN APP -->
-<div class="container hidden" id="appBox">
+    <select id="voice"></select>
 
-  <h2>AI Voice Generator</h2>
+    <br>
 
-  <textarea id="text" placeholder="Enter text here..."></textarea>
+    <button onclick="speak()">Speak</button>
+    <button onclick="downloadSpeech()">Download MP3</button>
+  </div>
 
-  <select id="voice"></select>
+  <script>
 
-  <button onclick="speak()">▶ Generate Speech</button>
-  <button onclick="stopSpeech()">⏹ Stop</button>
-  <button onclick="downloadSpeech()">⬇ Download</button>
+    let voices = [];
 
-</div>
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
 
-<div class="footer">
-  © 2026 SAR Text to Speech
-</div>
+      const voiceSelect = document.getElementById("voice");
+      voiceSelect.innerHTML = "";
 
-<script>
-
-  // ---------------- LOGIN ----------------
-  async function login() {
-
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    const res = await fetch("/login", {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-
-    if(data.success){
-      document.getElementById("authBox").classList.add("hidden");
-      document.getElementById("appBox").classList.remove("hidden");
-      loadVoices();
-    } else {
-      alert(data.error || "Login failed");
-    }
-  }
-
-  // ---------------- REGISTER ----------------
-  async function register() {
-
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    const res = await fetch("/register", {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-
-    if(data.success){
-      alert("Registration successful!");
-    } else {
-      alert(data.error || "Register failed");
-    }
-  }
-
-  // ---------------- LOAD VOICES ----------------
-function loadVoices() {
-
-  const voices = speechSynthesis.getVoices();
-
-  const voiceSelect = document.getElementById("voice");
-
-  voiceSelect.innerHTML = "";
-
-  // Filter only English voices
-  const filteredVoices = voices.filter(voice =>
-    voice.lang.includes("en")
-  );
-
-  // Sort premium voices first
-  filteredVoices.sort((a, b) => {
-
-    const premium = ["Google", "Microsoft"];
-
-    const aPremium = premium.some(p => a.name.includes(p));
-    const bPremium = premium.some(p => b.name.includes(p));
-
-    return bPremium - aPremium;
-  });
-
-  filteredVoices.forEach((voice, index) => {
-
-    const option = document.createElement("option");
-
-    option.value = voices.indexOf(voice);
-
-    let label = voice.name;
-
-    // Better labels
-    if (voice.name.includes("Google")) {
-      label += " ⭐";
+      voices.forEach((voice, i) => {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = voice.name + " (" + voice.lang + ")";
+        voiceSelect.appendChild(option);
+      });
     }
 
-    if (voice.name.includes("Microsoft")) {
-      label += " 🔥";
+    speechSynthesis.onvoiceschanged = loadVoices;
+
+    loadVoices();
+
+    // ---------------- LOGIN ----------------
+    async function login() {
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      alert(JSON.stringify(data));
     }
 
-    option.textContent = label + " - " + voice.lang;
+    // ---------------- REGISTER ----------------
+    async function register() {
 
-    voiceSelect.appendChild(option);
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
-  });
+      const res = await fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
 
-}
+      const data = await res.json();
+      alert(JSON.stringify(data));
+    }
 
-  // ---------------- SPEAK ----------------
-function speak() {
+    // ---------------- SPEAK ----------------
+    function speak() {
 
-  speechSynthesis.cancel();
+      const text = document.getElementById("text").value;
 
-  const text = document.getElementById("text").value;
+      const voiceIndex = document.getElementById("voice").value;
 
-  if (!text) {
-    alert("Please enter text");
-    return;
-  }
+      const utterance = new SpeechSynthesisUtterance(text);
 
-  const voices = speechSynthesis.getVoices();
+      utterance.voice = voices[voiceIndex];
 
-  const selectedVoice =
-    document.getElementById("voice").value;
+      speechSynthesis.speak(utterance);
+    }
 
-  const utterance =
-    new SpeechSynthesisUtterance(text);
+    // ---------------- DOWNLOAD ----------------
+    async function downloadSpeech() {
 
-  utterance.rate = 1;
-  utterance.pitch = 1;
+      const text = document.getElementById("text").value;
 
-  if (voices[selectedVoice]) {
-    utterance.voice = voices[selectedVoice];
-  }
+      const res = await fetch("/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
 
-  speechSynthesis.speak(utterance);
+      const data = await res.json();
 
-}
-  // ---------------- STOP ----------------
-  function stopSpeech(){
-    speechSynthesis.cancel();
-  }
+      if (data.audio) {
 
-  // ---------------- DOWNLOAD ----------------
-  function downloadSpeech(){
+        const a = document.createElement("a");
+        a.href = data.audio;
+        a.download = "speech.wav";
+        a.click();
 
-async function downloadSpeech() {
+      } else {
+        alert("Download failed");
+      }
+    }
 
-  const text = document.getElementById("text").value;
-
-  if (!text) {
-    alert("Please enter text first");
-    return;
-  }
-
-  const response = await fetch("/speak", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ text })
-  });
-
-  const data = await response.json();
-
-  if (data.audio) {
-
-    const link = document.createElement("a");
-
-    link.href = data.audio;
-
-    link.download = "sar_speech.wav";
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-
-  } else {
-
-    alert("Speech generation failed");
-
-  }
-
-}
-</script>
+  </script>
 
 </body>
 </html>
