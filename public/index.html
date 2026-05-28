@@ -131,18 +131,58 @@ let voices = [];
 
 function loadVoices() {
   voices = speechSynthesis.getVoices();
-  const v = document.getElementById("voice");
 
-  v.innerHTML = "";
+  const select = document.getElementById("voice");
+  select.innerHTML = "";
+
+  const grouped = {
+    "🇺🇸 English (High Quality)": [],
+    "🇬🇧 UK English": [],
+    "🌍 Other": []
+  };
 
   voices.forEach((voice, i) => {
-    let option = document.createElement("option");
-    option.value = i;
-    option.textContent = voice.name;
-    v.appendChild(option);
-  });
-}
 
+    // ❌ FILTER BAD / LOW QUALITY VOICES
+    if (
+      !voice.name.toLowerCase().includes("google") &&
+      !voice.name.toLowerCase().includes("microsoft") &&
+      !voice.name.toLowerCase().includes("natural") &&
+      voice.lang.startsWith("en") === false
+    ) {
+      return;
+    }
+
+    const item = {
+      index: i,
+      name: voice.name,
+      lang: voice.lang
+    };
+
+    if (voice.lang === "en-US") {
+      grouped["🇺🇸 English (High Quality)"].push(item);
+    } else if (voice.lang === "en-GB") {
+      grouped["🇬🇧 UK English"].push(item);
+    } else {
+      grouped["🌍 Other"].push(item);
+    }
+  });
+
+  for (let group in grouped) {
+
+    const optGroup = document.createElement("optgroup");
+    optGroup.label = group;
+
+    grouped[group].forEach(v => {
+      const option = document.createElement("option");
+      option.value = v.index;
+      option.textContent = v.name + " (" + v.lang + ")";
+      optGroup.appendChild(option);
+    });
+
+    select.appendChild(optGroup);
+  }
+}
 speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
