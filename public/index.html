@@ -2,39 +2,23 @@
 <html lang="en">
 
 <head>
-<head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>SAR Text to Speech</title>
 
-  <!-- 🔥 PASTE GOOGLE ANALYTICS HERE -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MJW8XLZ5R4"></script>
+  <!-- SEO -->
+  <meta name="description" content="SAR Text to Speech AI - Convert text into natural voice and download MP3 instantly.">
 
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MJW8XLZ5R4"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-
     gtag('js', new Date());
     gtag('config', 'G-MJW8XLZ5R4');
   </script>
 
-</head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- 🔥 SEO -->
-  <title>SAR Text to Speech - AI Voice Generator</title>
-
-  <meta name="description" content="SAR Text to Speech is a modern AI voice generator. Convert text into natural speech and download MP3 instantly.">
-  <meta name="keywords" content="text to speech, AI voice generator, speech AI, SAR TTS, convert text to audio">
-  <meta name="author" content="SAR Developer">
-
-  <!-- 🌍 Social Preview -->
-  <meta property="og:title" content="SAR Text to Speech - AI Voice Generator">
-  <meta property="og:description" content="Convert text into natural AI voice and download MP3 instantly.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://sar-text-to-speech.onrender.com">
-
-  <!-- 🎨 UI STYLE -->
   <style>
     body {
       margin: 0;
@@ -85,13 +69,14 @@
     button {
       background: #ff6a00;
       color: white;
-      cursor: pointer;
       font-weight: bold;
+      cursor: pointer;
       transition: 0.3s;
     }
 
     button:hover {
       background: #e85c00;
+      transform: scale(1.02);
     }
 
     .footer {
@@ -113,15 +98,8 @@
 
     <textarea id="text" placeholder="Enter text here..."></textarea>
 
-    <!-- 🎤 VOICE SELECTION -->
-    <select id="voice">
-      <option value="male">Male Voice</option>
-      <option value="female">Female Voice</option>
-      <option value="british">British Voice</option>
-      <option value="indian">Indian Voice</option>
-    </select>
+    <select id="voice"></select>
 
-    <!-- 🔘 BUTTONS -->
     <button onclick="speak()">▶ Generate Speech</button>
     <button onclick="stop()">⏹ Stop</button>
     <button onclick="download()">⬇ Download MP3</button>
@@ -131,36 +109,67 @@
   </div>
 
   <div class="footer">
-    © 2026 SAR Text to Speech | AI Voice SaaS
+    © 2026 SAR Text to Speech
   </div>
 
-  <!-- ⚙️ SIMPLE JS (frontend demo) -->
   <script>
-    function speak() {
-      const text = document.getElementById("text").value;
-      const voice = document.getElementById("voice").value;
+    // Load real system voices
+    function loadVoices() {
+      const voices = speechSynthesis.getVoices();
+      const voiceSelect = document.getElementById("voice");
 
-      fetch("/speak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice })
-      })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("audio").src = data.audio;
+      voiceSelect.innerHTML = "";
+
+      voices.forEach((voice, i) => {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = voice.name + " (" + voice.lang + ")";
+        voiceSelect.appendChild(option);
       });
     }
 
+    speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    // Speak (frontend fallback TTS)
+    function speak() {
+      const text = document.getElementById("text").value;
+      const voices = speechSynthesis.getVoices();
+      const voiceIndex = document.getElementById("voice").value;
+
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      if (voices[voiceIndex]) {
+        utterance.voice = voices[voiceIndex];
+      }
+
+      speechSynthesis.speak(utterance);
+
+      // Also try backend (if exists)
+      fetch("/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.audio) {
+          document.getElementById("audio").src = data.audio;
+        }
+      })
+      .catch(err => console.log("Backend TTS not active"));
+    }
+
     function stop() {
-      const audio = document.getElementById("audio");
-      audio.pause();
-      audio.currentTime = 0;
+      speechSynthesis.cancel();
     }
 
     function download() {
-      const audio = document.getElementById("audio").src;
+      const audio = document.getElementById("audio");
+      if (!audio.src) return alert("No audio yet!");
+      
       const a = document.createElement("a");
-      a.href = audio;
+      a.href = audio.src;
       a.download = "speech.mp3";
       a.click();
     }
