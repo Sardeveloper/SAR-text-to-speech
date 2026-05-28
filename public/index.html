@@ -1,14 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>SAR Text to Speech</title>
-
-  <!-- SEO -->
-  <meta name="description" content="SAR Text to Speech AI - Convert text into natural voice and download MP3 instantly.">
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-MJW8XLZ5R4"></script>
@@ -20,160 +16,221 @@
   </script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #fff7f0;
+    body{
+      margin:0;
+      font-family:Arial;
+      background:#fff7f0;
     }
 
-    .header {
-      background: #ff6a00;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
+    .header{
+      background:#ff6a00;
+      color:white;
+      padding:15px;
+      text-align:center;
+      font-size:24px;
+      font-weight:bold;
     }
 
-    .container {
-      max-width: 700px;
-      margin: 30px auto;
-      padding: 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    .container{
+      max-width:700px;
+      margin:30px auto;
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.1);
     }
 
-    textarea {
-      width: 100%;
-      height: 150px;
-      padding: 10px;
-      border: 2px solid #ff6a00;
-      border-radius: 8px;
-      font-size: 16px;
+    input, textarea, select, button{
+      width:100%;
+      margin-top:10px;
+      padding:12px;
+      border-radius:8px;
+      font-size:16px;
     }
 
-    select, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: none;
-      font-size: 16px;
+    textarea{
+      height:140px;
+      border:2px solid #ff6a00;
     }
 
-    select {
-      border: 2px solid #ff6a00;
+    input, select{
+      border:2px solid #ff6a00;
     }
 
-    button {
-      background: #ff6a00;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
+    button{
+      border:none;
+      background:#ff6a00;
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+      transition:0.3s;
     }
 
-    button:hover {
-      background: #e85c00;
-      transform: scale(1.02);
+    button:hover{
+      background:#e85c00;
+      transform:scale(1.01);
     }
 
-    .footer {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 12px;
-      color: gray;
+    .hidden{
+      display:none;
+    }
+
+    .footer{
+      text-align:center;
+      margin-top:20px;
+      color:gray;
+      font-size:12px;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="header">
-    🔊 SAR Text to Speech AI
-  </div>
+<div class="header">
+  🔊 SAR Text to Speech
+</div>
 
-  <div class="container">
+<!-- LOGIN / REGISTER -->
+<div class="container" id="authBox">
 
-    <textarea id="text" placeholder="Enter text here..."></textarea>
+  <h2>Login</h2>
 
-    <select id="voice"></select>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
 
-    <button onclick="speak()">▶ Generate Speech</button>
-    <button onclick="stop()">⏹ Stop</button>
-    <button onclick="download()">⬇ Download MP3</button>
+  <button onclick="login()">Login</button>
+  <button onclick="register()">Register</button>
 
-    <audio id="audio" controls style="width:100%; margin-top:15px;"></audio>
+</div>
 
-  </div>
+<!-- MAIN APP -->
+<div class="container hidden" id="appBox">
 
-  <div class="footer">
-    © 2026 SAR Text to Speech
-  </div>
+  <h2>AI Voice Generator</h2>
 
-  <script>
-    // Load real system voices
-    function loadVoices() {
-      const voices = speechSynthesis.getVoices();
-      const voiceSelect = document.getElementById("voice");
+  <textarea id="text" placeholder="Enter text here..."></textarea>
 
-      voiceSelect.innerHTML = "";
+  <select id="voice"></select>
 
-      voices.forEach((voice, i) => {
-        const option = document.createElement("option");
-        option.value = i;
-        option.textContent = voice.name + " (" + voice.lang + ")";
-        voiceSelect.appendChild(option);
-      });
+  <button onclick="speak()">▶ Generate Speech</button>
+  <button onclick="stopSpeech()">⏹ Stop</button>
+  <button onclick="downloadSpeech()">⬇ Download</button>
+
+</div>
+
+<div class="footer">
+  © 2026 SAR Text to Speech
+</div>
+
+<script>
+
+  // ---------------- LOGIN ----------------
+  async function login() {
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const res = await fetch("/login", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if(data.success){
+      document.getElementById("authBox").classList.add("hidden");
+      document.getElementById("appBox").classList.remove("hidden");
+      loadVoices();
+    } else {
+      alert(data.error || "Login failed");
+    }
+  }
+
+  // ---------------- REGISTER ----------------
+  async function register() {
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const res = await fetch("/register", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if(data.success){
+      alert("Registration successful!");
+    } else {
+      alert(data.error || "Register failed");
+    }
+  }
+
+  // ---------------- LOAD VOICES ----------------
+  function loadVoices(){
+
+    const voices = speechSynthesis.getVoices();
+    const voiceSelect = document.getElementById("voice");
+
+    voiceSelect.innerHTML = "";
+
+    voices.forEach((voice, index) => {
+
+      const option = document.createElement("option");
+
+      option.value = index;
+      option.textContent = voice.name + " (" + voice.lang + ")";
+
+      voiceSelect.appendChild(option);
+
+    });
+
+  }
+
+  speechSynthesis.onvoiceschanged = loadVoices;
+
+  // ---------------- SPEAK ----------------
+  function speak(){
+
+    const text = document.getElementById("text").value;
+
+    if(!text){
+      alert("Please enter text");
+      return;
     }
 
-    speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices();
+    const voices = speechSynthesis.getVoices();
+    const selectedVoice = document.getElementById("voice").value;
 
-    // Speak (frontend fallback TTS)
-    function speak() {
-      const text = document.getElementById("text").value;
-      const voices = speechSynthesis.getVoices();
-      const voiceIndex = document.getElementById("voice").value;
+    const utterance = new SpeechSynthesisUtterance(text);
 
-      const utterance = new SpeechSynthesisUtterance(text);
-
-      if (voices[voiceIndex]) {
-        utterance.voice = voices[voiceIndex];
-      }
-
-      speechSynthesis.speak(utterance);
-
-      // Also try backend (if exists)
-      fetch("/speak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.audio) {
-          document.getElementById("audio").src = data.audio;
-        }
-      })
-      .catch(err => console.log("Backend TTS not active"));
+    if(voices[selectedVoice]){
+      utterance.voice = voices[selectedVoice];
     }
 
-    function stop() {
-      speechSynthesis.cancel();
-    }
+    speechSynthesis.speak(utterance);
 
-    function download() {
-      const audio = document.getElementById("audio");
-      if (!audio.src) return alert("No audio yet!");
-      
-      const a = document.createElement("a");
-      a.href = audio.src;
-      a.download = "speech.mp3";
-      a.click();
-    }
-  </script>
+  }
+
+  // ---------------- STOP ----------------
+  function stopSpeech(){
+    speechSynthesis.cancel();
+  }
+
+  // ---------------- DOWNLOAD ----------------
+  function downloadSpeech(){
+
+    alert("Browser speech cannot be downloaded directly yet. Backend MP3 system will be added next.");
+
+  }
+
+</script>
 
 </body>
 </html>
