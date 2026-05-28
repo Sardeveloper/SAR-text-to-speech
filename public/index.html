@@ -144,6 +144,8 @@
 
 <script>
 
+
+// Load voices safely
 let voices = [];
 
 function loadVoices() {
@@ -152,23 +154,17 @@ function loadVoices() {
   const select = document.getElementById("voice");
   select.innerHTML = "";
 
-  const grouped = {
-    "🇺🇸 English (High Quality)": [],
-    "🇬🇧 UK English": [],
+  const groups = {
+    "🇺🇸 English": [],
+    "🇬🇧 English UK": [],
+    "🇮🇳 Hindi": [],
+    "🇵🇰 Urdu": [],
     "🌍 Other": []
   };
 
   voices.forEach((voice, i) => {
 
-    // ❌ FILTER BAD / LOW QUALITY VOICES
-    if (
-      !voice.name.toLowerCase().includes("google") &&
-      !voice.name.toLowerCase().includes("microsoft") &&
-      !voice.name.toLowerCase().includes("natural") &&
-      voice.lang.startsWith("en") === false
-    ) {
-      return;
-    }
+    const lang = voice.lang.toLowerCase();
 
     const item = {
       index: i,
@@ -176,33 +172,61 @@ function loadVoices() {
       lang: voice.lang
     };
 
-    if (voice.lang === "en-US") {
-      grouped["🇺🇸 English (High Quality)"].push(item);
-    } else if (voice.lang === "en-GB") {
-      grouped["🇬🇧 UK English"].push(item);
-    } else {
-      grouped["🌍 Other"].push(item);
+    if (lang.includes("en-us")) {
+      groups["🇺🇸 English"].push(item);
+    }
+    else if (lang.includes("en-gb")) {
+      groups["🇬🇧 English UK"].push(item);
+    }
+    else if (lang.includes("hi")) {
+      groups["🇮🇳 Hindi"].push(item);
+    }
+    else if (lang.includes("ur")) {
+      groups["🇵🇰 Urdu"].push(item);
+    }
+    else {
+      groups["🌍 Other"].push(item);
     }
   });
 
-  for (let group in grouped) {
+  for (let g in groups) {
 
     const optGroup = document.createElement("optgroup");
-    optGroup.label = group;
+    optGroup.label = g;
 
-    grouped[group].forEach(v => {
+    groups[g].forEach(v => {
       const option = document.createElement("option");
       option.value = v.index;
-      option.textContent = v.name + " (" + v.lang + ")";
+      option.textContent = `${v.name} (${v.lang})`;
       optGroup.appendChild(option);
     });
 
     select.appendChild(optGroup);
   }
-}
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
 
+function speak() {
+
+  const text = document.getElementById("text").value;
+  const index = document.getElementById("voice").value;
+
+  const utter = new SpeechSynthesisUtterance(text);
+
+  const allVoices = speechSynthesis.getVoices();
+
+  if (allVoices[index]) {
+    utter.voice = allVoices[index];
+  }
+
+  utter.rate = 1;
+  utter.pitch = 1;
+
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+
+  saveHistory?.(text);
+}
+// Auto load (important fix)
+setTimeout(loadVoices, 800);
 // ---------------- LOGIN ----------------
 async function login() {
 
