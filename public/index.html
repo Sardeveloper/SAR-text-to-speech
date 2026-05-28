@@ -1,159 +1,232 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SAR Text to Speech</title>
+  <title>SAR Text-to-Speech</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
-      font-family: Arial;
-      text-align: center;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+
+    /* LOGIN SCREEN */
+    .login-screen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      width: 320px;
+    }
+
+    input, button, select, textarea {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      background: #f97316;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #ea580c;
+    }
+
+    /* MAIN APP */
+    .app {
+      display: none;
       padding: 20px;
     }
 
+    .header {
+      background: #111827;
+      padding: 15px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      margin-top: 30px;
+    }
+
     textarea {
-      width: 90%;
       height: 120px;
-      margin-bottom: 10px;
+      resize: none;
     }
 
-    select, button, input {
-      padding: 10px;
-      margin: 5px;
-      width: 90%;
-      max-width: 400px;
+    .row {
+      display: flex;
+      gap: 10px;
     }
 
-    .box {
-      margin-top: 20px;
+    .row button {
+      flex: 1;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>SAR Text-to-Speech</h1>
+<!-- LOGIN PAGE -->
+<div class="login-screen" id="loginScreen">
 
-  <!-- LOGIN -->
-  <div class="box">
-    <h3>Login</h3>
-    <input id="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Password" />
+  <div class="card">
+    <h2 style="text-align:center;">Login</h2>
+
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
 
     <button onclick="login()">Login</button>
     <button onclick="register()">Register</button>
   </div>
 
-  <hr>
+</div>
 
-  <!-- TEXT AREA -->
-  <div class="box">
-    <textarea id="text" placeholder="Write text here..."></textarea>
+<!-- MAIN APP -->
+<div class="app" id="app">
 
-    <br>
+  <div class="header">
+    SAR Text-to-Speech Dashboard
+  </div>
+
+  <div class="container">
+
+    <textarea id="text" placeholder="Write something..."></textarea>
 
     <select id="voice"></select>
 
-    <br>
+    <div class="row">
+      <button onclick="speak()">Speak</button>
+      <button onclick="downloadSpeech()">Download</button>
+    </div>
 
-    <button onclick="speak()">Speak</button>
-    <button onclick="downloadSpeech()">Download MP3</button>
+    <button onclick="logout()" style="margin-top:15px; background:red;">
+      Logout
+    </button>
+
   </div>
+</div>
 
-  <script>
+<script>
 
-    let voices = [];
+let voices = [];
 
-    function loadVoices() {
-      voices = speechSynthesis.getVoices();
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  const v = document.getElementById("voice");
 
-      const voiceSelect = document.getElementById("voice");
-      voiceSelect.innerHTML = "";
+  v.innerHTML = "";
 
-      voices.forEach((voice, i) => {
-        const option = document.createElement("option");
-        option.value = i;
-        option.textContent = voice.name + " (" + voice.lang + ")";
-        voiceSelect.appendChild(option);
-      });
-    }
+  voices.forEach((voice, i) => {
+    let option = document.createElement("option");
+    option.value = i;
+    option.textContent = voice.name;
+    v.appendChild(option);
+  });
+}
 
-    speechSynthesis.onvoiceschanged = loadVoices;
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
 
-    loadVoices();
+// ---------------- LOGIN ----------------
+async function login() {
 
-    // ---------------- LOGIN ----------------
-    async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+  const res = await fetch("/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
 
-      const res = await fetch("/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+  const data = await res.json();
 
-      const data = await res.json();
-      alert(JSON.stringify(data));
-    }
+  if (data.success) {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+  } else {
+    alert(data.error || "Login failed");
+  }
+}
 
-    // ---------------- REGISTER ----------------
-    async function register() {
+// ---------------- REGISTER ----------------
+async function register() {
 
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-      const res = await fetch("/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+  const res = await fetch("/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
 
-      const data = await res.json();
-      alert(JSON.stringify(data));
-    }
+  const data = await res.json();
 
-    // ---------------- SPEAK ----------------
-    function speak() {
+  alert(data.success ? "Registered!" : data.error);
+}
 
-      const text = document.getElementById("text").value;
+// ---------------- SPEAK ----------------
+function speak() {
 
-      const voiceIndex = document.getElementById("voice").value;
+  const text = document.getElementById("text").value;
+  const voiceIndex = document.getElementById("voice").value;
 
-      const utterance = new SpeechSynthesisUtterance(text);
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.voice = voices[voiceIndex];
 
-      utterance.voice = voices[voiceIndex];
+  speechSynthesis.speak(utter);
+}
 
-      speechSynthesis.speak(utterance);
-    }
+// ---------------- DOWNLOAD ----------------
+async function downloadSpeech() {
 
-    // ---------------- DOWNLOAD ----------------
-    async function downloadSpeech() {
+  const text = document.getElementById("text").value;
 
-      const text = document.getElementById("text").value;
+  const res = await fetch("/speak", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text })
+  });
 
-      const res = await fetch("/speak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text })
-      });
+  const data = await res.json();
 
-      const data = await res.json();
+  if (data.audio) {
+    const a = document.createElement("a");
+    a.href = data.audio;
+    a.download = "speech.wav";
+    a.click();
+  } else {
+    alert("Failed");
+  }
+}
 
-      if (data.audio) {
+// ---------------- LOGOUT ----------------
+function logout() {
+  document.getElementById("loginScreen").style.display = "flex";
+  document.getElementById("app").style.display = "none";
+}
 
-        const a = document.createElement("a");
-        a.href = data.audio;
-        a.download = "speech.wav";
-        a.click();
-
-      } else {
-        alert("Download failed");
-      }
-    }
-
-  </script>
+</script>
 
 </body>
 </html>
