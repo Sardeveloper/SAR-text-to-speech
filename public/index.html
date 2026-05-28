@@ -173,51 +173,85 @@
   }
 
   // ---------------- LOAD VOICES ----------------
-  function loadVoices(){
+function loadVoices() {
 
-    const voices = speechSynthesis.getVoices();
-    const voiceSelect = document.getElementById("voice");
+  const voices = speechSynthesis.getVoices();
 
-    voiceSelect.innerHTML = "";
+  const voiceSelect = document.getElementById("voice");
 
-    voices.forEach((voice, index) => {
+  voiceSelect.innerHTML = "";
 
-      const option = document.createElement("option");
+  // Filter only English voices
+  const filteredVoices = voices.filter(voice =>
+    voice.lang.includes("en")
+  );
 
-      option.value = index;
-      option.textContent = voice.name + " (" + voice.lang + ")";
+  // Sort premium voices first
+  filteredVoices.sort((a, b) => {
 
-      voiceSelect.appendChild(option);
+    const premium = ["Google", "Microsoft"];
 
-    });
+    const aPremium = premium.some(p => a.name.includes(p));
+    const bPremium = premium.some(p => b.name.includes(p));
 
-  }
+    return bPremium - aPremium;
+  });
 
-  speechSynthesis.onvoiceschanged = loadVoices;
+  filteredVoices.forEach((voice, index) => {
+
+    const option = document.createElement("option");
+
+    option.value = voices.indexOf(voice);
+
+    let label = voice.name;
+
+    // Better labels
+    if (voice.name.includes("Google")) {
+      label += " ⭐";
+    }
+
+    if (voice.name.includes("Microsoft")) {
+      label += " 🔥";
+    }
+
+    option.textContent = label + " - " + voice.lang;
+
+    voiceSelect.appendChild(option);
+
+  });
+
+}
 
   // ---------------- SPEAK ----------------
-  function speak(){
+function speak() {
 
-    const text = document.getElementById("text").value;
+  speechSynthesis.cancel();
 
-    if(!text){
-      alert("Please enter text");
-      return;
-    }
+  const text = document.getElementById("text").value;
 
-    const voices = speechSynthesis.getVoices();
-    const selectedVoice = document.getElementById("voice").value;
-
-    const utterance = new SpeechSynthesisUtterance(text);
-
-    if(voices[selectedVoice]){
-      utterance.voice = voices[selectedVoice];
-    }
-
-    speechSynthesis.speak(utterance);
-
+  if (!text) {
+    alert("Please enter text");
+    return;
   }
 
+  const voices = speechSynthesis.getVoices();
+
+  const selectedVoice =
+    document.getElementById("voice").value;
+
+  const utterance =
+    new SpeechSynthesisUtterance(text);
+
+  utterance.rate = 1;
+  utterance.pitch = 1;
+
+  if (voices[selectedVoice]) {
+    utterance.voice = voices[selectedVoice];
+  }
+
+  speechSynthesis.speak(utterance);
+
+}
   // ---------------- STOP ----------------
   function stopSpeech(){
     speechSynthesis.cancel();
@@ -226,10 +260,46 @@
   // ---------------- DOWNLOAD ----------------
   function downloadSpeech(){
 
-    alert("Browser speech cannot be downloaded directly yet. Backend MP3 system will be added next.");
+async function downloadSpeech() {
+
+  const text = document.getElementById("text").value;
+
+  if (!text) {
+    alert("Please enter text first");
+    return;
+  }
+
+  const response = await fetch("/speak", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ text })
+  });
+
+  const data = await response.json();
+
+  if (data.audio) {
+
+    const link = document.createElement("a");
+
+    link.href = data.audio;
+
+    link.download = "sar_speech.wav";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+  } else {
+
+    alert("Speech generation failed");
 
   }
 
+}
 </script>
 
 </body>
