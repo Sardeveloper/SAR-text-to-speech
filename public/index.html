@@ -313,7 +313,6 @@ function stopSpeech() {
 }
 
 /* ---------------- DOWNLOAD ---------------- */
-
 async function downloadSpeech() {
 
   const text = document.getElementById("text").value;
@@ -330,13 +329,12 @@ async function downloadSpeech() {
 
     const data = await res.json();
 
-    if (!data.text) {
-      alert("Download failed");
+    if (!data.success) {
+      alert(data.error || "Download failed");
       return;
     }
 
     const blob = new Blob([data.text], { type: "text/plain" });
-
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
@@ -347,9 +345,11 @@ async function downloadSpeech() {
     URL.revokeObjectURL(url);
 
   } catch (err) {
-    alert("Server error");
+    console.log(err);
+    alert("Server not responding");
   }
 }
+
 /* ---------------- LOGOUT ---------------- */
 
 function logout(){

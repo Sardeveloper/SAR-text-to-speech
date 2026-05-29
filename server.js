@@ -105,19 +105,21 @@ app.post("/login", (req, res) => {
 
 // ---------------- TEXT TO SPEECH ----------------
 app.post("/speak", (req, res) => {
+
   const text = req.body.text;
 
   if (!text) {
-    return res.json({ error: "No text provided" });
+    return res.status(400).json({
+      error: "No text provided"
+    });
   }
 
-  // send text back (no file system needed)
-  res.json({
+  return res.json({
+    success: true,
     text: text
   });
-});
-  }
 
+});
   const fileName = "speech_" + Date.now() + ".wav";
   const filePath = path.join(__dirname, "public", fileName);
 
