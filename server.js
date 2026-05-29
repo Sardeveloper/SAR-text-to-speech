@@ -137,11 +137,6 @@ app.get("/logout", (req, res) => {
   req.session.destroy();
   res.json({ success: true });
 });
-
-// ---------------- START SERVER ----------------
-app.listen(PORT, () => {
-  console.log(`🚀 SAR Text-to-Speech running on http://localhost:${PORT}`);
-});
 app.post("/speak", async (req, res) => {
 
   const text = req.body.text;
@@ -168,4 +163,9 @@ app.post("/speak", async (req, res) => {
     audio: "/" + fileName
   });
 
+});
+
+// ---------------- START SERVER ----------------
+app.listen(PORT, () => {
+  console.log(`🚀 SAR Text-to-Speech running on http://localhost:${PORT}`);
 });
