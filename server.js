@@ -142,3 +142,30 @@ app.get("/logout", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 SAR Text-to-Speech running on http://localhost:${PORT}`);
 });
+app.post("/speak", async (req, res) => {
+
+  const text = req.body.text;
+
+  if (!text) {
+    return res.json({
+      error: "No text provided"
+    });
+  }
+
+  // Browser speech cannot generate real MP3
+  // So we create a downloadable text file for now
+
+  const fs = require("fs");
+  const path = require("path");
+
+  const fileName = "speech.txt";
+
+  const filePath = path.join(__dirname, "public", fileName);
+
+  fs.writeFileSync(filePath, text);
+
+  res.json({
+    audio: "/" + fileName
+  });
+
+});
