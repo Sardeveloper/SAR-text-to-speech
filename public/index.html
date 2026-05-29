@@ -5,97 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
+    body{
+      margin:0;
+      font-family:Arial, sans-serif;
+      background:#0f172a;
+      color:white;
     }
 
-    /* LOGIN SCREEN */
-    .login-screen {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      flex-direction: column;
+    .login-screen{
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
     }
 
-    .card {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 12px;
-      width: 320px;
+    .card{
+      background:#1e293b;
+      padding:25px;
+      border-radius:12px;
+      width:320px;
+      box-shadow:0 0 20px rgba(0,0,0,0.3);
     }
 
-    input, button, select, textarea {
-      width: 100%;
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
+    h2{
+      text-align:center;
     }
 
-    button {
-      background: #f97316;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
+    input,
+    textarea,
+    select,
+    button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border:none;
+      border-radius:8px;
+      box-sizing:border-box;
+      font-size:15px;
     }
 
-    button:hover {
-      background: #ea580c;
+    textarea{
+      height:140px;
+      resize:none;
     }
 
-    /* MAIN APP */
-    .app {
-      display: none;
-      padding: 20px;
+    button{
+      background:#f97316;
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
     }
 
-    .header {
-      background: #111827;
-      padding: 15px;
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
+    button:hover{
+      background:#ea580c;
     }
 
-    .container {
-      max-width: 600px;
-      margin: auto;
-      margin-top: 30px;
+    .app{
+      display:none;
     }
 
-    textarea {
-      height: 120px;
-      resize: none;
+    .header{
+      background:#111827;
+      padding:18px;
+      text-align:center;
+      font-size:22px;
+      font-weight:bold;
     }
 
-    .row {
-      display: flex;
-      gap: 10px;
+    .container{
+      max-width:700px;
+      margin:auto;
+      padding:20px;
     }
 
-    .row button {
-      flex: 1;
+    .row{
+      display:flex;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .history-box{
+      background:#111827;
+      padding:15px;
+      border-radius:10px;
+      margin-top:15px;
+      display:none;
+    }
+
+    label{
+      display:block;
+      margin-top:15px;
     }
   </style>
 </head>
 
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- LOGIN SCREEN -->
 <div class="login-screen" id="loginScreen">
 
   <div class="card">
-    <h2 style="text-align:center;">Login</h2>
 
-    <input id="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
+    <h2>SAR Text-to-Speech</h2>
+
+    <input type="email" id="email" placeholder="Email">
+
+    <input type="password" id="password" placeholder="Password">
 
     <button onclick="login()">Login</button>
+
     <button onclick="register()">Register</button>
+
   </div>
 
 </div>
@@ -109,212 +129,275 @@
 
   <div class="container">
 
-    <textarea id="text" placeholder="Write something..."></textarea>
+    <textarea id="text" placeholder="Write your text here..."></textarea>
+
+    <label>Select Voice</label>
 
     <select id="voice"></select>
-<label>Speed</label>
-<input type="range" id="speed" min="0.5" max="2" value="1" step="0.1">
 
-<label>Pitch</label>
-<input type="range" id="pitch" min="0" max="2" value="1" step="0.1">
+    <label>Speed</label>
+    <input type="range" id="speed" min="0.5" max="2" value="1" step="0.1">
 
-<div class="row">
-  <button onclick="speak()">Speak</button>
-  <button onclick="stopSpeech()">Stop</button>
-</div>
-
-<div class="row">
-  <button onclick="downloadSpeech()">Download</button>
-  <button onclick="showHistory()">History</button>
-</div>
-
-<div id="historyBox" style="display:none; margin-top:10px;"></div>
+    <label>Pitch</label>
+    <input type="range" id="pitch" min="0" max="2" value="1" step="0.1">
 
     <div class="row">
       <button onclick="speak()">Speak</button>
-      <button onclick="downloadSpeech()">Download</button>
+      <button onclick="stopSpeech()">Stop</button>
     </div>
 
-    <button onclick="logout()" style="margin-top:15px; background:red;">
+    <div class="row">
+      <button onclick="downloadSpeech()">Download</button>
+      <button onclick="showHistory()">History</button>
+    </div>
+
+    <button onclick="logout()" style="margin-top:15px;background:red;">
       Logout
     </button>
 
+    <div class="history-box" id="historyBox"></div>
+
   </div>
+
 </div>
 
 <script>
 
-
-// Load voices safely
 let voices = [];
+let historyList = [];
+
+/* ---------------- LOAD VOICES ---------------- */
 
 function loadVoices() {
+
   voices = speechSynthesis.getVoices();
 
   const select = document.getElementById("voice");
-  select.innerHTML = "";
 
-  const groups = {
-    "🇺🇸 English": [],
-    "🇬🇧 English UK": [],
-    "🇮🇳 Hindi": [],
-    "🇵🇰 Urdu": [],
-    "🌍 Other": []
-  };
+  select.innerHTML = "";
 
   voices.forEach((voice, i) => {
 
-    const lang = voice.lang.toLowerCase();
+    const option = document.createElement("option");
 
-    const item = {
-      index: i,
-      name: voice.name,
-      lang: voice.lang
-    };
+    option.value = i;
 
-    if (lang.includes("en-us")) {
-      groups["🇺🇸 English"].push(item);
-    }
-    else if (lang.includes("en-gb")) {
-      groups["🇬🇧 English UK"].push(item);
-    }
-    else if (lang.includes("hi")) {
-      groups["🇮🇳 Hindi"].push(item);
-    }
-    else if (lang.includes("ur")) {
-      groups["🇵🇰 Urdu"].push(item);
-    }
-    else {
-      groups["🌍 Other"].push(item);
-    }
+    option.textContent = voice.name + " (" + voice.lang + ")";
+
+    select.appendChild(option);
+
   });
-
-  for (let g in groups) {
-
-    const optGroup = document.createElement("optgroup");
-    optGroup.label = g;
-
-    groups[g].forEach(v => {
-      const option = document.createElement("option");
-      option.value = v.index;
-      option.textContent = `${v.name} (${v.lang})`;
-      optGroup.appendChild(option);
-    });
-
-    select.appendChild(optGroup);
-  }
-
-function speak() {
-
-  const text = document.getElementById("text").value;
-  const index = document.getElementById("voice").value;
-
-  const utter = new SpeechSynthesisUtterance(text);
-
-  const allVoices = speechSynthesis.getVoices();
-
-  if (allVoices[index]) {
-    utter.voice = allVoices[index];
-  }
-
-  utter.rate = 1;
-  utter.pitch = 1;
-
-  speechSynthesis.cancel();
-  speechSynthesis.speak(utter);
-
-  saveHistory?.(text);
 }
-// Auto load (important fix)
-setTimeout(loadVoices, 800);
-// ---------------- LOGIN ----------------
+
+speechSynthesis.onvoiceschanged = loadVoices;
+
+setTimeout(loadVoices, 1000);
+
+/* ---------------- LOGIN ---------------- */
+
 async function login() {
 
   const email = document.getElementById("email").value;
+
   const password = document.getElementById("password").value;
 
-  const res = await fetch("/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
-  });
+  try {
 
-  const data = await res.json();
+    const res = await fetch("/login", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        email,
+        password
+      })
+    });
 
-  if (data.success) {
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("app").style.display = "block";
-  } else {
-    alert(data.error || "Login failed");
+    const data = await res.json();
+
+    if(data.success){
+
+      document.getElementById("loginScreen").style.display = "none";
+
+      document.getElementById("app").style.display = "block";
+
+    } else {
+
+      alert(data.error || "Login failed");
+
+    }
+
+  } catch(err){
+
+    alert("Server error");
+
   }
 }
 
-// ---------------- REGISTER ----------------
+/* ---------------- REGISTER ---------------- */
+
 async function register() {
 
   const email = document.getElementById("email").value;
+
   const password = document.getElementById("password").value;
 
-  const res = await fetch("/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
-  });
+  try {
 
-  const data = await res.json();
+    const res = await fetch("/register", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        email,
+        password
+      })
+    });
 
-  alert(data.success ? "Registered!" : data.error);
+    const data = await res.json();
+
+    if(data.success){
+
+      alert("Registered successfully");
+
+    } else {
+
+      alert(data.error || "Register failed");
+
+    }
+
+  } catch(err){
+
+    alert("Server error");
+
+  }
 }
 
-// ---------------- SPEAK ----------------
+/* ---------------- SPEAK ---------------- */
+
 function speak() {
 
   const text = document.getElementById("text").value;
+
   const voiceIndex = document.getElementById("voice").value;
 
   const speed = parseFloat(document.getElementById("speed").value);
+
   const pitch = parseFloat(document.getElementById("pitch").value);
 
   const utter = new SpeechSynthesisUtterance(text);
 
-  utter.voice = voices[voiceIndex];
+  if(voices[voiceIndex]){
+    utter.voice = voices[voiceIndex];
+  }
+
   utter.rate = speed;
+
   utter.pitch = pitch;
+
+  speechSynthesis.cancel();
 
   speechSynthesis.speak(utter);
 
   saveHistory(text);
 }
-// ---------------- DOWNLOAD ----------------
+
+/* ---------------- STOP ---------------- */
+
+function stopSpeech() {
+
+  speechSynthesis.cancel();
+
+}
+
+/* ---------------- DOWNLOAD ---------------- */
+
 async function downloadSpeech() {
 
   const text = document.getElementById("text").value;
 
-  const res = await fetch("/speak", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text })
-  });
+  try {
 
-  const data = await res.json();
+    const res = await fetch("/speak", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        text
+      })
+    });
 
-  if (data.audio) {
-    const a = document.createElement("a");
-    a.href = data.audio;
-    a.download = "speech.wav";
-    a.click();
-  } else {
-    alert("Failed");
+    const data = await res.json();
+
+    if(data.audio){
+
+      const a = document.createElement("a");
+
+      a.href = data.audio;
+
+      a.download = "speech.wav";
+
+      a.click();
+
+    } else {
+
+      alert("Download failed");
+
+    }
+
+  } catch(err){
+
+    alert("Server error");
+
   }
 }
 
-// ---------------- LOGOUT ----------------
-function logout() {
-  document.getElementById("loginScreen").style.display = "flex";
+/* ---------------- LOGOUT ---------------- */
+
+function logout(){
+
   document.getElementById("app").style.display = "none";
+
+  document.getElementById("loginScreen").style.display = "flex";
+
 }
-function stopSpeech() {
-  speechSynthesis.cancel();
+
+/* ---------------- HISTORY ---------------- */
+
+function saveHistory(text){
+
+  if(!text) return;
+
+  historyList.push(text);
+
+  if(historyList.length > 10){
+    historyList.shift();
+  }
+}
+
+function showHistory(){
+
+  const box = document.getElementById("historyBox");
+
+  if(box.style.display === "block"){
+
+    box.style.display = "none";
+
+    return;
+  }
+
+  box.style.display = "block";
+
+  box.innerHTML = "<h3>History</h3>";
+
+  historyList.forEach((item, index) => {
+
+    box.innerHTML += `<p>${index + 1}. ${item}</p>`;
+
+  });
 }
 
 </script>
