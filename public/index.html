@@ -321,40 +321,35 @@ async function downloadSpeech() {
   try {
 
     const res = await fetch("/speak", {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
       },
-      body:JSON.stringify({
-        text
-      })
+      body: JSON.stringify({ text })
     });
 
     const data = await res.json();
 
-    if(data.audio){
-
-      const a = document.createElement("a");
-
-      a.href = data.audio;
-
-      a.download = "speech.wav";
-
-      a.click();
-
-    } else {
-
+    if (!data.text) {
       alert("Download failed");
-
+      return;
     }
 
-  } catch(err){
+    const blob = new Blob([data.text], { type: "text/plain" });
 
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "speech.txt";
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+  } catch (err) {
     alert("Server error");
-
   }
 }
-
 /* ---------------- LOGOUT ---------------- */
 
 function logout(){

@@ -105,11 +105,17 @@ app.post("/login", (req, res) => {
 
 // ---------------- TEXT TO SPEECH ----------------
 app.post("/speak", (req, res) => {
-
   const text = req.body.text;
 
   if (!text) {
     return res.json({ error: "No text provided" });
+  }
+
+  // send text back (no file system needed)
+  res.json({
+    text: text
+  });
+});
   }
 
   const fileName = "speech_" + Date.now() + ".wav";
